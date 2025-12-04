@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useHotel } from '../context/HotelContext';
-import { Plus, Bed, Sparkles, Wrench, Check, AlertCircle } from 'lucide-react';
+import { Plus, Bed, Sparkles, Wrench, Check, AlertCircle, Utensils } from 'lucide-react';
 import { RoomCategory } from '../types';
 
-const RoomList: React.FC = () => {
+const RoomList: React.FC<{ onOpenRestaurant?: (roomNumber: string) => void }> = ({ onOpenRestaurant }) => {
   const { rooms, addRoom, employees, addServiceRequest, serviceRequests, completeServiceRequest } = useHotel();
   
   // State for Add Room Modal
@@ -115,7 +115,7 @@ const RoomList: React.FC = () => {
                     </div>
                  </div>
 
-                 <div className="grid grid-cols-2 gap-2 mt-4">
+                 <div className="grid grid-cols-3 gap-2 mt-4">
                     {/* Cleaning Button */}
                     <button 
                         onClick={(e) => { 
@@ -168,6 +168,24 @@ const RoomList: React.FC = () => {
                     >
                         {pendingMaintenance ? <Check size={16} /> : <Wrench size={16} />}
                         <span className="text-[10px] font-bold mt-1">{pendingMaintenance ? 'Concluir' : 'Manut.'}</span>
+                    </button>
+
+                    {/* Room Service Button */}
+                    <button 
+                        onClick={(e) => { 
+                            e.stopPropagation();
+                            if (room.status === 'ocupado' && onOpenRestaurant) {
+                                onOpenRestaurant(room.number);
+                            } else if (room.status !== 'ocupado') {
+                                alert('Este quarto não está ocupado no momento.');
+                            }
+                        }}
+                        className="flex flex-col items-center justify-center p-2 rounded border border-black transition-colors bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Serviço de Quarto (Restaurante)"
+                        disabled={room.status !== 'ocupado'}
+                    >
+                        <Utensils size={16} />
+                        <span className="text-[10px] font-bold mt-1">Serviço</span>
                     </button>
                  </div>
               </div>

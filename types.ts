@@ -65,7 +65,7 @@ export interface MenuItem {
   name: string;
   description: string;
   price: number;
-  category: 'food' | 'drink';
+  category: 'food' | 'drink' | 'dessert';
   imageUrl: string;
 }
 
@@ -78,12 +78,13 @@ export interface HotelContextType {
   serviceRequests: ServiceRequest[];
   menuItems: MenuItem[];
   currentUser: Employee | null;
+  loyaltyConfig: { pointsPerDiscount: number };
   
   addClient: (client: Omit<Client, 'id' | 'points'>) => void;
   addEmployee: (employee: Omit<Employee, 'id'>) => void;
   addRoom: (room: Room) => void;
   createStay: (stayData: { clientId: string; guestCount: number; checkIn: string; checkOut: string; roomNumber: string }) => void;
-  checkoutStay: (stayId: string) => void;
+  checkoutStay: (stayId: string, pointsToUse?: number) => { discount: number; pointsUsed: number; earnedPoints: number } | undefined;
   
   addServiceRequest: (req: Omit<ServiceRequest, 'id' | 'status' | 'createdAt'>) => void;
   completeServiceRequest: (id: string) => void;
@@ -95,6 +96,8 @@ export interface HotelContextType {
   searchEmployees: (query: string) => Employee[];
   getClientStays: (clientId: string) => Stay[];
   getAvailableRooms: (checkIn: string, checkOut: string, guests: number, category?: RoomCategory) => Room[];
+  
+  setLoyaltyConfig: (config: { pointsPerDiscount: number }) => void;
   
   login: (identifier: string, password: string) => boolean;
   logout: () => void;

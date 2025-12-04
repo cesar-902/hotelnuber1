@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { HotelProvider, useHotel } from './context/HotelContext';
-import { LayoutDashboard, Users, UserCog, Bed, CalendarRange, Menu, Lock, LogOut, Utensils } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, Bed, CalendarRange, Menu, Lock, LogOut, Utensils, History } from 'lucide-react';
 
 // Components
 import Dashboard from './components/Dashboard';
 import ClientList from './components/ClientList';
 import EmployeeList from './components/EmployeeList';
 import RoomList from './components/RoomList';
-import BookingSystem from './components/BookingSystem';
+
 import RestaurantMenu from './components/RestaurantMenu';
 import AuthScreen from './components/AuthScreen';
+import StayHistory from './components/StayHistory';
 
-type View = 'dashboard' | 'clients' | 'employees' | 'rooms' | 'bookings' | 'restaurant';
+type View = 'dashboard' | 'clients' | 'employees' | 'rooms' | 'restaurant' | 'history';
 
 const MainApp: React.FC = () => {
   const { currentUser, logout } = useHotel();
@@ -22,7 +23,7 @@ const MainApp: React.FC = () => {
   const getAllowedViews = (role: string): View[] => {
       switch(role) {
           case 'Gerente':
-              return ['dashboard', 'clients', 'bookings', 'rooms', 'employees', 'restaurant'];
+              return ['dashboard', 'clients', 'rooms', 'employees', 'restaurant', 'history'];
           case 'Recepcionista':
               return ['clients', 'rooms', 'restaurant'];
           case 'Garçom':
@@ -44,6 +45,11 @@ const MainApp: React.FC = () => {
         if (allowedViews.length > 0) setCurrentView(allowedViews[0]);
     }
   }, [currentUser, allowedViews, currentView]);
+
+  const handleRoomService = (roomNumber: string) => {
+    setCurrentView('restaurant');
+    // The restaurant will automatically show active stays for selection
+  };
 
 
   const NavItem = ({ view, icon: Icon, label }: { view: View; icon: React.ElementType; label: string }) => {
@@ -99,9 +105,9 @@ const MainApp: React.FC = () => {
           <nav className="mt-2 space-y-1">
             <NavItem view="dashboard" icon={LayoutDashboard} label="Visão Geral" />
             <NavItem view="clients" icon={Users} label="Clientes" />
-            <NavItem view="bookings" icon={CalendarRange} label="Estadias" />
+            <NavItem view="rooms" icon={Bed} label="Estadias" />
+            <NavItem view="history" icon={History} label="Histórico" />
             <NavItem view="restaurant" icon={Utensils} label="Restaurante" />
-            <NavItem view="rooms" icon={Bed} label="Quartos" />
             <NavItem view="employees" icon={UserCog} label="Funcionários" />
           </nav>
 
@@ -135,8 +141,8 @@ const MainApp: React.FC = () => {
               {currentView === 'dashboard' && allowedViews.includes('dashboard') && <Dashboard />}
               {currentView === 'clients' && allowedViews.includes('clients') && <ClientList />}
               {currentView === 'employees' && allowedViews.includes('employees') && <EmployeeList />}
-              {currentView === 'rooms' && allowedViews.includes('rooms') && <RoomList />}
-              {currentView === 'bookings' && allowedViews.includes('bookings') && <BookingSystem />}
+              {currentView === 'rooms' && allowedViews.includes('rooms') && <RoomList onOpenRestaurant={handleRoomService} />}
+              {currentView === 'history' && allowedViews.includes('history') && <StayHistory />}
               {currentView === 'restaurant' && allowedViews.includes('restaurant') && <RestaurantMenu />}
             </div>
           </main>

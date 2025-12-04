@@ -29,6 +29,7 @@ export const HotelProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(INITIAL_MENU);
   const [currentUser, setCurrentUser] = useState<Employee | null>(null);
+  const [loyaltyConfig, setLoyaltyConfig] = useState({ pointsPerDiscount: 10 }); // 10 points = 1% discount
 
   const generateId = () => Math.random().toString(36).substr(2, 9).toUpperCase();
 
@@ -67,6 +68,7 @@ export const HotelProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       setStays(data.stays || []);
       setServiceRequests(data.serviceRequests || []);
       setMenuItems(data.menuItems || INITIAL_MENU);
+      setLoyaltyConfig(data.loyaltyConfig || { pointsPerDiscount: 10 });
     } else {
         // First run initialization
         const defaultAdmin: Employee = {
@@ -86,8 +88,8 @@ export const HotelProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Save to local storage on change
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ clients, employees, rooms, stays, serviceRequests, menuItems }));
-  }, [clients, employees, rooms, stays, serviceRequests, menuItems]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ clients, employees, rooms, stays, serviceRequests, menuItems, loyaltyConfig }));
+  }, [clients, employees, rooms, stays, serviceRequests, menuItems, loyaltyConfig]);
 
 
   const addClient = (data: Omit<Client, 'id' | 'points'>) => {
@@ -199,24 +201,33 @@ export const HotelProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setRooms(prev => prev.map(r => r.number === roomNumber ? { ...r, status: 'ocupado' } : r));
   };
 
-  const checkoutStay = (stayId: string) => {
+  const checkoutStay = (stayId: string, pointsToUse: number = 0) => {
     const stay = stays.find(s => s.id === stayId);
     if (!stay || stay.status === 'completed') return;
 
+    const client = clients.find(c => c.id === stay.clientId);
+    if (!client) return;
+
     // Determine Room Category and Points Multiplier
     const room = rooms.find(r => r.number === stay.roomNumber);
-    let pointsPerDay = 1; // Standard
+    let pointsPerDay = 2; // Standard: 2 points/day
 
     if (room) {
-        if (room.category === 'Luxo') pointsPerDay = 2; // Doubles Standard
-        if (room.category === 'Presidente') pointsPerDay = 4; // Doubles Luxo
+        if (room.category === 'Luxo') pointsPerDay = 4; // Luxo: 4 points/day
+        if (room.category === 'Presidente') pointsPerDay = 8; // Presidente: 8 points/day
     }
     
     const earnedPoints = stay.totalDays * pointsPerDay;
 
     // Recalculate Final Cost (Room Rate * Days + Charges)
     const extraCharges = (stay.charges || []).reduce((acc, curr) => acc + curr.amount, 0);
-    const finalTotalCost = (stay.totalDays * (room?.dailyRate || 0)) + extraCharges;
+    let finalTotalCost = (stay.totalDays * (room?.dailyRate || 0)) + extraCharges;
+
+    // Apply points discount
+    const maxPointsToUse = Math.min(pointsToUse, client.points);
+    const discountPercentage = maxPointsToUse / loyaltyConfig.pointsPerDiscount;
+    const discount = (finalTotalCost * discountPercentage) / 100;
+    finalTotalCost = Math.max(0, finalTotalCost - discount);
 
     // Update Stay status and finalize cost
     setStays(prev => prev.map(s => s.id === stayId ? { ...s, status: 'completed', totalCost: finalTotalCost } : s));
@@ -231,13 +242,15 @@ export const HotelProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         employeeId: '' // Unassigned
     });
 
-    // Add Loyalty Points
+    // Update client: Add earned points and subtract used points
     setClients(prev => prev.map(c => {
       if (c.id === stay.clientId) {
-        return { ...c, points: c.points + earnedPoints };
+        return { ...c, points: c.points + earnedPoints - maxPointsToUse };
       }
       return c;
     }));
+
+    return { discount, pointsUsed: maxPointsToUse, earnedPoints };
   };
 
   const searchClients = (query: string) => {
@@ -300,10 +313,11 @@ export const HotelProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   return (
     <HotelContext.Provider value={{
-      clients, employees, rooms, stays, serviceRequests, currentUser, menuItems,
+      clients, employees, rooms, stays, serviceRequests, currentUser, menuItems, loyaltyConfig,
       addClient, addEmployee, addRoom, createStay, checkoutStay,
       addServiceRequest, completeServiceRequest, addMenuItem, addChargeToStay,
       searchClients, searchEmployees, getClientStays, getAvailableRooms,
+      setLoyaltyConfig,
       login, logout
     }}>
       {children}
