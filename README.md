@@ -11,6 +11,6 @@
 3. Run the app:
    `npm run dev`
    <h2 web saite>
-<link rel="stylesheet" href="https://hotelrelex.netlify.app/">
+stylesheet" href="https://hotelrelex.netlify.app/"
 <h2 link vidio>
-<link rel="stylesheet" href="https://photos.app.goo.gl/QJNEDAomuzrxEuiT8">
+stylesheet" href="https://photos.app.goo.gl/QJNEDAomuzrxEuiT8"
