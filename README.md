@@ -1,10 +1,3 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="/imagem/taejongdae-resort-park-6925259_1280.jpg" />
-</div>
-
-
-
-
 ## Run Locally
 <h2 web saite>
 <link rel="stylesheet" href="https://hotelrelex.netlify.app/">
